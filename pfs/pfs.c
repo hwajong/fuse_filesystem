@@ -12,7 +12,8 @@
 #include <errno.h>
 
 // 파일 속성 셋팅.
-static int pfs_getattr(const char *path, struct stat *stbuf) {
+static int pfs_getattr(const char *path, struct stat *stbuf)
+{
 	char pid[512] = { 0, };
 	char fname[512] = { 0, };
 	char vmsize[1024] = { 0, };
@@ -21,7 +22,8 @@ static int pfs_getattr(const char *path, struct stat *stbuf) {
 	struct stat statbuf;
 
 	memset(stbuf, 0, sizeof(struct stat));
-	if(strcmp(path, "/") == 0) {
+	if(strcmp(path, "/") == 0)
+	{
 		stbuf->st_mode = S_IFDIR | 0755;
 		stbuf->st_nlink = 2;
 		return 0;
@@ -38,7 +40,9 @@ static int pfs_getattr(const char *path, struct stat *stbuf) {
 	// path 에서 pid 문자열만 추출.
 	strcpy(pid, path + 1);
 	p = strchr(pid, '-');
-	*p = 0;
+	if(p != NULL)
+		*p = 0;
+
 	sprintf(fname, "/proc/%s", pid);
 
 	memset(&statbuf, 0, sizeof(statbuf));
@@ -56,8 +60,10 @@ static int pfs_getattr(const char *path, struct stat *stbuf) {
 	if(fp == NULL)
 		return -errno;
 
-	while (fgets(vmsize, sizeof(vmsize), fp) != 0) {
-		if(memcmp(vmsize, "VmSize:", 7) == 0) {
+	while (fgets(vmsize, sizeof(vmsize), fp) != 0)
+	{
+		if(memcmp(vmsize, "VmSize:", 7) == 0)
+		{
 			int size = 0;
 			sscanf(vmsize + 7, "%d", &size);
 
@@ -74,8 +80,10 @@ static int pfs_getattr(const char *path, struct stat *stbuf) {
 }
 
 // 문자열에서 t 문자를 모두 c 문자로 변경한다. 
-static void replace_char(char *s, char t, char c) {
-	while (*s) {
+static void replace_char(char *s, char t, char c)
+{
+	while (*s)
+	{
 		if(*s == t)
 			*s = c;
 		s++;
@@ -84,7 +92,8 @@ static void replace_char(char *s, char t, char c) {
 
 // 파일 목록 셋팅.
 static int pfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
-	off_t offset, struct fuse_file_info *fi) {
+	off_t offset, struct fuse_file_info *fi)
+{
 	DIR *dir = NULL;
 	struct dirent *ent = NULL;
 	char fname[512] = { 0, };
@@ -107,7 +116,8 @@ static int pfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 		return -errno;
 
 	// proc 디렉토리의 모든 파일을 돌면서 처리.
-	while ((ent = readdir(dir)) != NULL) {
+	while ((ent = readdir(dir)) != NULL)
+	{
 		// 첫글자가 숫자인 경우만 처리.
 		if(!isdigit(ent->d_name[0]))
 			continue;
@@ -115,13 +125,15 @@ static int pfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 		// cmdline 파일 오픈
 		sprintf(fname, "/proc/%s/cmdline", ent->d_name);
 		fp = fopen(fname, "r");
-		if(fp == NULL) {
+		if(fp == NULL)
+		{
 			closedir(dir);
 			return -errno;
 		}
 
 		// cmdline 파일내용 읽기.
-		if(fgets(cmdline, sizeof(cmdline), fp) == NULL) {
+		if(fgets(cmdline, sizeof(cmdline), fp) == NULL)
+		{
 			fclose(fp);
 			continue;
 		}
@@ -141,7 +153,8 @@ static int pfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 }
 
 // rm 처리
-static int pfs_unlink(const char *path) {
+static int pfs_unlink(const char *path)
+{
 	char fname[512] = { 0, };
 	char *p = NULL;
 	int pid = 0;
@@ -167,6 +180,7 @@ static struct fuse_operations pfs_oper = {
 	.unlink = pfs_unlink
 };
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
 	return fuse_main(argc, argv, &pfs_oper);
 }
