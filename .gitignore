@@ -1,3 +1,5 @@
 *.o
 
 pfs/pfs
+
+test
