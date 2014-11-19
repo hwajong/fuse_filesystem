@@ -30,21 +30,22 @@ static int pfs_getattr(const char *path, struct stat *stbuf)
 
 		stbuf->st_nlink = 1;
 		stbuf->st_mode = S_IFREG | 0644;	// st_mode 0644 로 설정
-		stbuf->st_atim = stbuf2.st_atim;	// 시간 속성 설정
-		stbuf->st_mtim = stbuf2.st_mtim;
-		stbuf->st_ctim = stbuf2.st_ctim;
 		stbuf->st_uid = getuid();	// uid, gid 설정
 		stbuf->st_gid = getgid();
 
 		// pid 값만 뽑아낸다
 		strcpy(pid_str, path + 1);
 		ptr = strchr(pid_str, '-');
-		*ptr = 0;
+		if(ptr != NULL) *ptr = 0;
 		sprintf(temp, "/proc/%s", pid_str);
 
 		memset(&stbuf2, 0, sizeof(stbuf2));
 		if(stat(temp, &stbuf2) == -1)
 			return errno;
+
+		stbuf->st_atim = stbuf2.st_atim;	// 시간 속성 설정
+		stbuf->st_mtim = stbuf2.st_mtim;
+		stbuf->st_ctim = stbuf2.st_ctim;
 
 		// VmSize 읽기
 		sprintf(temp, "/proc/%s/status", pid_str);
