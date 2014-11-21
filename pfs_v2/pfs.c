@@ -10,6 +10,33 @@
 #include <fcntl.h>
 #include <fuse.h>
 
+// 모든 c1 문자 c2로 치환
+static void change_character(char *str, char c1, char c2)
+{
+	int len = strlen(str);
+	int i;
+
+	for(i = 0; i < len; i++)
+	{
+		if(str[i] == c1)
+			str[i] = c2;
+	}
+}
+
+static int is_digit_str(const char *str)
+{
+	int len = strlen(str);
+	int i;
+
+	for(i = 0; i < len; i++)
+	{
+		if(!isdigit(str[i]))
+			return 0;			// false
+	}
+
+	return 1;					// true
+}
+
 // 파일 속성을 설정한다. 
 static int pfs_getattr(const char *path, struct stat *stbuf)
 {
@@ -55,7 +82,7 @@ static int pfs_getattr(const char *path, struct stat *stbuf)
 
 		while (fgets(temp, sizeof(temp), fp) != 0)
 		{
-			if(strncpy(temp, "VmSize:", 7) == 0)
+			if(strncmp(temp, "VmSize:", 7) == 0)
 			{
 				int vmsize = 0;
 				sscanf(temp + 7, "%d", &vmsize);
@@ -72,33 +99,6 @@ static int pfs_getattr(const char *path, struct stat *stbuf)
 	}
 
 	return 0;
-}
-
-// 모든 c1 문자 c2로 치환
-static void change_character(char *str, char c1, char c2)
-{
-	int len = strlen(str);
-	int i;
-
-	for(i = 0; i < len; i++)
-	{
-		if(str[i] == c1)
-			str[i] = c2;
-	}
-}
-
-static int is_digit_str(const char *str)
-{
-	int len = strlen(str);
-	int i;
-
-	for(i = 0; i < len; i++)
-	{
-		if(!isdigit(str[i]))
-			return 0;			// false
-	}
-
-	return 1;					// true
 }
 
 static int pfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,

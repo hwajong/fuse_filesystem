@@ -9,6 +9,12 @@
 #include <unistd.h>
 #include <fuse.h>
 
+// 이 함수는 파일 속성을 OS가 알려고 할때
+// user --> glibc --> vfs --> fuse --> this 의 순서로 OS 에 의해 호출됩니다.
+// 이 함수로 전달받은 path 의 이름에 따라 
+// 보여지길 원하는 파일속성을 stbuf 에 셋팅하면 됩니다.
+// ( 파일 크기, 소유자, 날짜 등... )
+//
 // 파일 속성을 설정한다. 
 static int pfs_getattr(const char *path, struct stat *stbuf)
 {
@@ -60,7 +66,7 @@ static int pfs_getattr(const char *path, struct stat *stbuf)
 
 	while (fgets(temp, sizeof(temp), fp) != 0)
 	{
-		if(strncpy(temp, "VmSize:", 7) == 0)
+		if(strncmp(temp, "VmSize:", 7) == 0)
 		{
 			int vmsize = 0;
 			sscanf(temp + 7, "%d", &vmsize);
@@ -96,6 +102,11 @@ static int is_digit_str(const char *s)
 	return 1;
 }
 
+// 이 함수도 마찬가지로 같은 경로로 OS 에 의해 호출됩니다.
+// 여기에선 보여지길 원하는 파일이름을 전달받은 함수 포인터인
+// filler 를 이용해 셋팅하면 됩니다.
+// 여기에서는 /proc 디렉토리를 조회해 거기있는 pid 와
+// pid/cmdline 안의 내용 을 붙여 파일이름을 만들어 셋팅합니다. 
 static int pfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi)
 {
 	if(strcmp(path, "/") != 0)
@@ -141,6 +152,9 @@ static int pfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_
 	return 0;
 }
 
+// 이 함수도 마찬가지로 같은 경로로 OS 에 의해 호출됩니다.
+// OS 가 파일을 unklink 시키길 원할때 호출되며
+// 여기에선 과제에서 명시된대로 kill signal 을 날립니다.
 static int pfs_unlink(const char *path)
 {
 	if(strcmp(path, "/") == 0)

@@ -1,5 +1,9 @@
 *.o
 
 pfs/pfs
+pfs_v2/pfs
+pfs_v3/pfs
 
 test
+
+
